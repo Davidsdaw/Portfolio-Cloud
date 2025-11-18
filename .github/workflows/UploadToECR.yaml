@@ -6,9 +6,9 @@ on:
   #     - main
   workflow_dispatch:
     inputs:
-      IMAGETAG:
-        description: 'Imagen tag'
-        required: true
+      image-tag:
+        description: 'Imagen tag (opcional). Si no se proporciona, se usará el SHA del commit.'
+        required: false
 
 jobs:
   build-and-push:
@@ -28,8 +28,34 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-      
-      - name: Build y Push imagen Docker a ECR
+
+      - name: Set and sanitize IMAGE_TAG
+        id: set-image-tag
         run: |
-          docker build -t ${{ secrets.ECR_REGISTRY }}:$IMAGETAG .
-          docker push ${{ secrets.ECR_REGISTRY }}:$IMAGETAG
+          IMAGE_TAG="${{ github.event.inputs.image-tag || github.sha }}"
+          IMAGE_TAG=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9._-]/-/g' | sed 's/^-*//; s/-*$//')
+          echo "Using IMAGE_TAG=$IMAGE_TAG"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Check ECR repository exists
+        id: check-repo
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+        run: |
+          if aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" --region "$AWS_REGION" >/dev/null 2>&1; then
+            echo "Repository exists: $ECR_REPOSITORY"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Repository does not exist: $ECR_REPOSITORY — skipping push"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push image to ECR
+        if: steps.check-repo.outputs.exists == 'true'
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
