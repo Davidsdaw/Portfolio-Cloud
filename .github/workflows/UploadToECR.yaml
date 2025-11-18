@@ -6,7 +6,7 @@ on:
   #     - main
   workflow_dispatch:
     inputs:
-      image-tag:
+      IMAGETAG:
         description: 'Imagen tag'
         required: true
 
@@ -31,5 +31,5 @@ jobs:
       
       - name: Build y Push imagen Docker a ECR
         run: |
-          docker build -t ${{ secrets.ECR_REGISTRY }}:$image-tag .
-          docker push ${{ secrets.ECR_REGISTRY }}:$image-tag
+          docker build -t ${{ secrets.ECR_REGISTRY }}:$IMAGETAG .
+          docker push ${{ secrets.ECR_REGISTRY }}:$IMAGETAG
