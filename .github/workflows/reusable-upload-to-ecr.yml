@@ -1,13 +1,20 @@
-name: Upload to ECR
+name: Reusable Upload to ECR
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  workflow_dispatch:
+  workflow_call:
     inputs:
       IMAGETAG:
         description: 'Imagen tag'
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_REGION:
+        required: true
+      ECR_REGISTRY:
         required: true
 
 jobs:
@@ -31,5 +38,5 @@ jobs:
       
       - name: Build y Push imagen Docker a ECR
         run: |
-          docker build -t ${{ secrets.ECR_REGISTRY }}:${{ github.event.inputs.IMAGETAG }} .
-          docker push ${{ secrets.ECR_REGISTRY }}:${{ github.event.inputs.IMAGETAG }}
+          docker build -t ${{ secrets.ECR_REGISTRY }}:${{ inputs.IMAGETAG }} .
+          docker push ${{ secrets.ECR_REGISTRY }}:${{ inputs.IMAGETAG }}
