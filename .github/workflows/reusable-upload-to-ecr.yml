@@ -16,15 +16,24 @@ on:
         required: true
       ECR_REGISTRY:
         required: true
+      GITHUB_TOKEN:
+        required: true
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
-      
+
+      - name: Checkout Dockerfile repo
+        uses: actions/checkout@v3
+        with:
+          repository: "Davidsdaw/Portfolio-Cloud"  
+          path: docker-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -35,16 +44,8 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-      
-      - name: Debug Dockerfile location
-        run: |
-          echo "Current directory: $(pwd)"
-          ls -la
-          if [ -f Dockerfile ]; then echo "Dockerfile encontrado ✅"; else echo "Dockerfile NO encontrado ❌"; fi
 
-
-      - name: Build y Push imagen Docker a ECR
-        working-directory: ${{ github.workspace }}
+      - name: Build and push Docker image
         run: |
-          docker build -t ${{ secrets.ECR_REGISTRY }}:${{ inputs.IMAGETAG }} .
+          docker build -f docker-repo/Dockerfile -t ${{ secrets.ECR_REGISTRY }}:${{ inputs.IMAGETAG }} docker-repo
           docker push ${{ secrets.ECR_REGISTRY }}:${{ inputs.IMAGETAG }}
