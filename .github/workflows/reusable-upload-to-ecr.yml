@@ -37,6 +37,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
       
       - name: Build y Push imagen Docker a ECR
+        working-directory: ${{ github.workspace }}
         run: |
           docker build -t ${{ secrets.ECR_REGISTRY }}:${{ inputs.IMAGETAG }} .
           docker push ${{ secrets.ECR_REGISTRY }}:${{ inputs.IMAGETAG }}
