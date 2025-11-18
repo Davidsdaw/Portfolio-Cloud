@@ -16,7 +16,7 @@ on:
         required: true
       ECR_REGISTRY:
         required: true
-      GITHUB_TOKEN:
+      PAT:
         required: true
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
         with:
           repository: "Davidsdaw/Portfolio-Cloud"  
           path: docker-repo
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
