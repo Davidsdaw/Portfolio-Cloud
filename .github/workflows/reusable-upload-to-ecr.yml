@@ -36,6 +36,13 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
       
+      - name: Debug Dockerfile location
+        run: |
+          echo "Current directory: $(pwd)"
+          ls -la
+          if [ -f Dockerfile ]; then echo "Dockerfile encontrado ✅"; else echo "Dockerfile NO encontrado ❌"; fi
+
+
       - name: Build y Push imagen Docker a ECR
         working-directory: ${{ github.workspace }}
         run: |
